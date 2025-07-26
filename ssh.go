@@ -1,0 +1,116 @@
+package main
+
+import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"io"
+	"log"
+	"net"
+	"os"
+
+	"golang.org/x/crypto/ssh"
+)
+
+func startSSHProxy() {
+	keyBytes, err := os.ReadFile("data/ssh_key.pem")
+	if err != nil {
+		fmt.Println("Server key not found, generating...")
+
+		key, _ := rsa.GenerateKey(rand.Reader, 2048)
+
+		der := x509.MarshalPKCS1PrivateKey(key)
+		block := &pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: der,
+		}
+
+		os.WriteFile("data/ssh_key.pem", pem.EncodeToMemory(block), 0600)
+		keyBytes, _ = os.ReadFile("data/ssh_key.pem")
+	}
+
+	key, err := ssh.ParsePrivateKey([]byte(keyBytes))
+	if err != nil {
+		log.Fatal("Failed to parse private key:", err)
+	}
+
+	config := &ssh.ServerConfig{
+		NoClientAuth: true,
+	}
+	config.AddHostKey(key)
+
+	listener, err := net.Listen("tcp", ":22")
+	if err != nil {
+		log.Fatal("Failed to listen on :22:", err)
+	}
+	fmt.Println("SSH jump host listening on port 22...")
+
+	for {
+		clientConn, err := listener.Accept()
+		if err != nil {
+			log.Println("Failed to accept incoming connection:", err)
+			continue
+		}
+
+		go func(nConn net.Conn, config *ssh.ServerConfig) {
+			defer nConn.Close()
+
+			sshConn, chans, reqs, err := ssh.NewServerConn(nConn, config)
+			if err != nil {
+				log.Println("SSH handshake failed:", err)
+				return
+			}
+			defer sshConn.Close()
+
+			go ssh.DiscardRequests(reqs)
+
+			for newChannel := range chans {
+				if newChannel.ChannelType() != "direct-tcpip" {
+					newChannel.Reject(ssh.ConnectionFailed, "do not connect to this host directly, use it as a jump host.")
+					continue
+				}
+
+				var channelData struct {
+					DestAddr string
+					DestPort uint32
+					OrigAddr string
+					OrigPort uint32
+				}
+
+				if err := ssh.Unmarshal(newChannel.ExtraData(), &channelData); err != nil {
+					log.Println("Failed to parse direct-tcpip data:", err)
+					newChannel.Reject(ssh.ConnectionFailed, "bad direct-tcpip request")
+					return
+				}
+
+				dest := fmt.Sprintf("%s:%d", channelData.DestAddr, channelData.DestPort)
+				log.Printf("Proxying direct-tcpip request to %s", dest)
+
+				targetConn, err := net.Dial("tcp", dest)
+				if err != nil {
+					log.Printf("Failed to connect to destination %s: %v", dest, err)
+					newChannel.Reject(ssh.ConnectionFailed, err.Error())
+					return
+				}
+
+				channel, requests, err := newChannel.Accept()
+				if err != nil {
+					log.Println("Could not accept channel:", err)
+					targetConn.Close()
+					return
+				}
+
+				go ssh.DiscardRequests(requests)
+
+				go func() {
+					io.Copy(targetConn, channel)
+				}()
+				go func() {
+					io.Copy(channel, targetConn)
+				}()
+			}
+		}(clientConn, config)
+	}
+}
