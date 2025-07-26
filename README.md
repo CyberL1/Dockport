@@ -11,7 +11,7 @@ Dockport is a lighweight, automatic proxy for docker containers.
 
 2. Run the proxy using:
    ```bash
-   docker run -d -p 80:80 --name Dockport -e PROXY_DOMAIN=localhost --network Dockport ghcr.io/cyberl1/dockport
+   docker run -d --name Dockport -v Dockport:/Dockport/data -e PROXY_DOMAIN=localhost --network Dockport -p 80:80 -v 2222:22 ghcr.io/cyberl1/dockport
    ```
 
 3. Run another container connected to the proxy network:
