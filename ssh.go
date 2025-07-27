@@ -85,7 +85,7 @@ func startSSHProxy() {
 				}
 
 				dest := fmt.Sprintf("%s:%d", channelData.DestAddr, channelData.DestPort)
-				fmt.Printf("Proxying direct-tcpip request to %s", dest)
+				fmt.Printf("Proxying direct-tcpip request to %s\n", dest)
 
 				targetConn, err := net.Dial("tcp", dest)
 				if err != nil {
