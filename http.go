@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dockport/utils"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -23,7 +24,9 @@ func startHTTPProxy(proxyDomain string) {
 			containerPort = 80
 		}
 
+		containerName = utils.FindContainerNameByAlias(containerName)
 		containerAddress, _ := url.Parse(fmt.Sprintf("http://%s:%d", containerName, containerPort))
+
 		httputil.NewSingleHostReverseProxy(containerAddress).ServeHTTP(w, r)
 	})
 
