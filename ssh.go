@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 
@@ -33,7 +32,7 @@ func startSSHProxy() {
 
 	key, err := ssh.ParsePrivateKey([]byte(keyBytes))
 	if err != nil {
-		log.Fatal("Failed to parse private key:", err)
+		fmt.Println("Failed to parse private key:", err)
 	}
 
 	config := &ssh.ServerConfig{
@@ -43,14 +42,14 @@ func startSSHProxy() {
 
 	listener, err := net.Listen("tcp", ":22")
 	if err != nil {
-		log.Fatal("Failed to listen on :22:", err)
+		fmt.Println("Failed to listen on :22:", err)
 	}
 	fmt.Println("SSH jump host listening on port 22...")
 
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {
-			log.Println("Failed to accept incoming connection:", err)
+			fmt.Println("Failed to accept incoming connection:", err)
 			continue
 		}
 
@@ -59,7 +58,7 @@ func startSSHProxy() {
 
 			sshConn, chans, reqs, err := ssh.NewServerConn(nConn, config)
 			if err != nil {
-				log.Println("SSH handshake failed:", err)
+				fmt.Println("SSH handshake failed:", err)
 				return
 			}
 			defer sshConn.Close()
@@ -80,24 +79,24 @@ func startSSHProxy() {
 				}
 
 				if err := ssh.Unmarshal(newChannel.ExtraData(), &channelData); err != nil {
-					log.Println("Failed to parse direct-tcpip data:", err)
+					fmt.Println("Failed to parse direct-tcpip data:", err)
 					newChannel.Reject(ssh.ConnectionFailed, "bad direct-tcpip request")
 					return
 				}
 
 				dest := fmt.Sprintf("%s:%d", channelData.DestAddr, channelData.DestPort)
-				log.Printf("Proxying direct-tcpip request to %s", dest)
+				fmt.Printf("Proxying direct-tcpip request to %s", dest)
 
 				targetConn, err := net.Dial("tcp", dest)
 				if err != nil {
-					log.Printf("Failed to connect to destination %s: %v", dest, err)
+					fmt.Printf("Failed to connect to destination %s: %v", dest, err)
 					newChannel.Reject(ssh.ConnectionFailed, err.Error())
 					return
 				}
 
 				channel, requests, err := newChannel.Accept()
 				if err != nil {
-					log.Println("Could not accept channel:", err)
+					fmt.Println("Could not accept channel:", err)
 					targetConn.Close()
 					return
 				}
