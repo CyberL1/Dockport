@@ -21,7 +21,7 @@ func startHTTPProxy(proxyDomain string) {
 		if err == nil {
 			containerName = strings.Join(partsSplitted[:len(partsSplitted)-1], "-")
 		} else {
-			containerPort = 80
+			containerPort = utils.FindContainerDefaultPort(containerName)
 		}
 
 		containerName = utils.FindContainerNameByAlias(containerName)
