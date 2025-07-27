@@ -12,6 +12,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	_, err := os.Stat("/var/run/docker.sock")
+	if err != nil {
+		fmt.Println("Docker socket not mounted, some features relying on the socket won't be avaliable")
+	}
+
 	go startHTTPProxy(proxyDomain)
 	go startSSHProxy()
 
