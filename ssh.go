@@ -104,9 +104,15 @@ func startSSHProxy() {
 				go ssh.DiscardRequests(requests)
 
 				go func() {
+					defer targetConn.Close()
+					defer channel.Close()
+
 					io.Copy(targetConn, channel)
 				}()
 				go func() {
+					defer targetConn.Close()
+					defer channel.Close()
+
 					io.Copy(channel, targetConn)
 				}()
 			}
