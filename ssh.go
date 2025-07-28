@@ -89,7 +89,7 @@ func startSSHProxy() {
 
 				targetConn, err := net.Dial("tcp", dest)
 				if err != nil {
-					fmt.Printf("Failed to connect to destination %s: %v", dest, err)
+					fmt.Printf("Failed to connect to destination %s:\n %v", dest, err)
 					newChannel.Reject(ssh.ConnectionFailed, err.Error())
 					return
 				}
