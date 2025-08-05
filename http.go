@@ -12,14 +12,16 @@ import (
 
 func startHTTPProxy(proxyDomain string) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		parts := strings.TrimSuffix(r.Host, "."+proxyDomain)
-		partsSplitted := strings.Split(parts, "-")
+		hostname := strings.TrimSuffix(r.Host, "."+proxyDomain)
+		subdomains := strings.Split(hostname, ".")
 
-		containerName := parts
-		containerPort, err := strconv.Atoi(partsSplitted[len(partsSplitted)-1])
+		containerName := subdomains[len(subdomains)-1]
+		containerNameSplitted := strings.Split(containerName, "-")
+
+		containerPort, err := strconv.Atoi(containerNameSplitted[len(containerNameSplitted)-1])
 
 		if err == nil {
-			containerName = strings.Join(partsSplitted[:len(partsSplitted)-1], "-")
+			containerName = strings.Join(containerNameSplitted[:len(containerNameSplitted)-1], "-")
 		} else {
 			containerPort = utils.FindContainerDefaultPort(containerName)
 		}
