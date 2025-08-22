@@ -87,8 +87,6 @@ func startSSHProxy() {
 					return
 				}
 
-				fmt.Println("Channel data:", channelData)
-
 				// Check if DestAddr is a container alias and replace it with the actual container name, otherwise use it as is
 				channelData.DestAddr = utils.FindContainerNameByAlias(channelData.DestAddr)
 
