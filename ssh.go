@@ -1,9 +1,12 @@
+// TODO: Add container aliases support (user@alias)
+
 package main
 
 import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"dockport/utils"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -83,6 +86,11 @@ func startSSHProxy() {
 					newChannel.Reject(ssh.ConnectionFailed, "bad direct-tcpip request")
 					return
 				}
+
+				fmt.Println("Channel data:", channelData)
+
+				// Check if DestAddr is a container alias and replace it with the actual container name, otherwise use it as is
+				channelData.DestAddr = utils.FindContainerNameByAlias(channelData.DestAddr)
 
 				dest := fmt.Sprintf("%s:%d", channelData.DestAddr, channelData.DestPort)
 				fmt.Printf("Proxying direct-tcpip request to %s\n", dest)
