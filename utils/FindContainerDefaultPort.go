@@ -24,7 +24,7 @@ func FindContainerDefaultPort(containerName string) int {
 		Filters: filters.NewArgs(filters.Arg("label", "Dockport.port")),
 	})
 
-	var containerDefaultPort int
+	containerDefaultPort := 80
 	for _, container := range containersWithPortLabel {
 		cleanName := strings.TrimPrefix(container.Names[0], "/")
 
@@ -37,10 +37,6 @@ func FindContainerDefaultPort(containerName string) int {
 			}
 			break
 		}
-
-		// Set port if container is missing the label
-		containerDefaultPort = 80
 	}
-
 	return containerDefaultPort
 }
