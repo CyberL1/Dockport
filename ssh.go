@@ -1,5 +1,3 @@
-// TODO: Add container aliases support (user@alias)
-
 package main
 
 import (
