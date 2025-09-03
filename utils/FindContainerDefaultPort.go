@@ -22,6 +22,7 @@ func FindContainerDefaultPort(containerName string) int {
 
 	containersWithPortLabel, _ := cli.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("label", "Dockport.port")),
+		All:     true,
 	})
 
 	containerDefaultPort := 80

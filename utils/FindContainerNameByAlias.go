@@ -21,6 +21,7 @@ func FindContainerNameByAlias(containerName string) string {
 
 	containersByAlias, _ := cli.ContainerList(context.Background(), container.ListOptions{
 		Filters: filters.NewArgs(filters.Arg("label", "Dockport.alias="+strings.ToLower(containerName))),
+		All:     true,
 	})
 
 	if len(containersByAlias) < 1 {
@@ -31,6 +32,5 @@ func FindContainerNameByAlias(containerName string) string {
 	for _, container := range containersByAlias {
 		aliasedContainerName = strings.TrimPrefix(container.Names[0], "/")
 	}
-
 	return aliasedContainerName
 }
