@@ -21,7 +21,8 @@ func FindContainerDefaultPort(containerName string) int {
 	}
 
 	containersWithPortLabel, _ := cli.ContainerList(context.Background(), container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("label", "Dockport.port"))})
+		Filters: filters.NewArgs(filters.Arg("label", "Dockport.port")),
+	})
 
 	var containerDefaultPort int
 	for _, container := range containersWithPortLabel {
