@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -94,8 +95,22 @@ func startSSHProxy() {
 				targetConn, err := net.Dial("tcp", dest)
 				if err != nil {
 					fmt.Printf("Failed to connect to destination %s:\n %v", dest, err)
-					newChannel.Reject(ssh.ConnectionFailed, err.Error())
-					return
+
+					// Boot container if it is offline
+					if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" {
+						utils.BootOfflineContainer(channelData.DestAddr)
+
+						for {
+							targetConn, err = net.Dial("tcp", dest)
+							if err == nil {
+								break
+							}
+							time.Sleep(100 * time.Millisecond)
+						}
+					} else {
+						newChannel.Reject(ssh.ConnectionFailed, err.Error())
+						return
+					}
 				}
 
 				channel, requests, err := newChannel.Accept()
