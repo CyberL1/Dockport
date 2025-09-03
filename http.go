@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func startHTTPProxy(proxyDomain string) {
@@ -27,9 +29,28 @@ func startHTTPProxy(proxyDomain string) {
 		}
 
 		containerName = utils.FindContainerNameByAlias(containerName)
-		containerAddress, _ := url.Parse(fmt.Sprintf("http://%s:%d", containerName, containerPort))
+		containerAddress := fmt.Sprintf("http://%s:%d", containerName, containerPort)
+		containerAddressParsed, _ := url.Parse(containerAddress)
 
-		httputil.NewSingleHostReverseProxy(containerAddress).ServeHTTP(w, r)
+		proxy := httputil.NewSingleHostReverseProxy(containerAddressParsed)
+
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			fmt.Println("http proxy error:", err)
+
+			if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" && strings.HasSuffix(err.Error(), "no such host") {
+				utils.BootOfflineContainer(containerName)
+
+				for {
+					_, err := http.Get(containerAddress)
+					if err == nil {
+						proxy.ServeHTTP(w, r)
+						break
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+		}
+		proxy.ServeHTTP(w, r)
 	})
 
 	http.ListenAndServe(":80", handler)
