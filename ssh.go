@@ -10,12 +10,13 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/ssh"
 )
 
-func startSSHProxy() {
+func startSSHProxy(proxyDomain string) {
 	keyBytes, err := os.ReadFile("data/ssh_key.pem")
 	if err != nil {
 		fmt.Println("Server key not found, generating...")
@@ -86,7 +87,7 @@ func startSSHProxy() {
 					return
 				}
 
-				// Check if DestAddr is a container alias and replace it with the actual container name, otherwise use it as is
+				channelData.DestAddr = strings.TrimSuffix(channelData.DestAddr, "."+proxyDomain)
 				channelData.DestAddr = utils.FindContainerNameByAlias(channelData.DestAddr)
 
 				dest := fmt.Sprintf("%s:%d", channelData.DestAddr, channelData.DestPort)

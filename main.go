@@ -18,7 +18,7 @@ func main() {
 	}
 
 	go startHTTPProxy(proxyDomain)
-	go startSSHProxy()
+	go startSSHProxy(proxyDomain)
 
 	// Block
 	select {}
