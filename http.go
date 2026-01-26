@@ -17,15 +17,37 @@ func startHTTPProxy(proxyDomain string) {
 		hostname := strings.TrimSuffix(r.Host, "."+proxyDomain)
 		subdomains := strings.Split(hostname, ".")
 
-		containerName := subdomains[len(subdomains)-1]
-		containerNameSplitted := strings.Split(containerName, "-")
+		var containerName string
+		var containerPort int
+		var err error
 
-		containerPort, err := strconv.Atoi(containerNameSplitted[len(containerNameSplitted)-1])
+		rootContainer := strings.TrimSpace(os.Getenv("HTTP_ROOT_CONTAINER"))
 
-		if err == nil {
-			containerName = strings.Join(containerNameSplitted[:len(containerNameSplitted)-1], "-")
-		} else {
+		if hostname == proxyDomain {
+			if rootContainer == "" {
+				fmt.Fprint(w, "Set HTTP_ROOT_CONTAINER environment variable to use this page.")
+				return
+			}
+
+			rootContainerParts := strings.Split(rootContainer, ":")
+
+			containerName = rootContainerParts[0]
 			containerPort = utils.FindContainerDefaultPort(containerName)
+
+			if len(rootContainerParts) > 1 {
+				containerPort, _ = strconv.Atoi(rootContainerParts[1])
+			}
+		} else {
+			containerName = subdomains[len(subdomains)-1]
+			containerNameSplitted := strings.Split(containerName, "-")
+
+			containerPort, err = strconv.Atoi(containerNameSplitted[len(containerNameSplitted)-1])
+
+			if err == nil {
+				containerName = strings.Join(containerNameSplitted[:len(containerNameSplitted)-1], "-")
+			} else {
+				containerPort = utils.FindContainerDefaultPort(containerName)
+			}
 		}
 
 		containerName = utils.FindContainerNameByAlias(containerName)
