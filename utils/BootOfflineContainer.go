@@ -3,29 +3,28 @@ package utils
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 )
 
-func BootOfflineContainer(containerName string) error {
+func BootOfflineContainer(containerName string) {
 	cli, _ := client.NewClientWithOpts(client.FromEnv)
 
 	_, err := cli.Ping(context.Background())
 	if err != nil {
 		fmt.Println("Docker socket not connected, cannot check if container is offline")
-		return nil
+		return
 	}
 
-	containers, _ := cli.ContainerList(context.Background(), container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("name", "^"+containerName+"$")),
-		All:     true,
-	})
+	containers, _ := cli.ContainerList(context.Background(), container.ListOptions{All: true})
 
-	if len(containers) == 1 && containers[0].State == container.StateExited {
-		fmt.Println("container offline, booting...")
-		cli.ContainerStart(context.Background(), containers[0].ID, container.StartOptions{})
+	for _, c := range containers {
+		if strings.EqualFold(containerName, strings.TrimPrefix(c.Names[0], "/")) && c.State == container.StateExited {
+			fmt.Println("container offline, booting...")
+			cli.ContainerStart(context.Background(), c.ID, container.StartOptions{})
+			break
+		}
 	}
-	return nil
 }
