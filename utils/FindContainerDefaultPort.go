@@ -26,11 +26,9 @@ func FindContainerDefaultPort(containerName string) int {
 	})
 
 	containerDefaultPort := 80
-	for _, container := range containersWithPortLabel {
-		cleanName := strings.TrimPrefix(container.Names[0], "/")
-
-		if strings.EqualFold(cleanName, containerName) || containerName == container.Labels["Dockport.alias"] {
-			containerDefaultPort, err = strconv.Atoi(container.Labels["Dockport.port"])
+	for _, c := range containersWithPortLabel {
+		if strings.EqualFold(containerName, strings.TrimPrefix(c.Names[0], "/")) {
+			containerDefaultPort, err = strconv.Atoi(c.Labels["Dockport.port"])
 			if err != nil {
 				fmt.Println("Failed to parse port, defaulting to 80")
 				containerDefaultPort = 80
