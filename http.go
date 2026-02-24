@@ -48,7 +48,6 @@ func startHTTPProxy(proxyDomain string) {
 			}
 		}
 
-		containerName = utils.FindContainerNameByAlias(containerName)
 		containerAddress := fmt.Sprintf("http://%s:%d", containerName, containerPort)
 		containerAddressParsed, _ := url.Parse(containerAddress)
 
