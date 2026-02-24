@@ -29,23 +29,21 @@ func startHTTPProxy(proxyDomain string) {
 				return
 			}
 
-			rootContainerParts := strings.Split(rootContainer, ":")
-
-			containerName = rootContainerParts[0]
+			containerName = utils.FindContainerNameByAlias(rootContainer)
 			containerPort = utils.FindContainerDefaultPort(containerName)
-
-			if len(rootContainerParts) > 1 {
-				containerPort, _ = strconv.Atoi(rootContainerParts[1])
-			}
 		} else {
 			containerName = subdomains[len(subdomains)-1]
-			containerNameSplitted := strings.Split(containerName, "-")
 
-			containerPort, err = strconv.Atoi(containerNameSplitted[len(containerNameSplitted)-1])
-
-			if err == nil {
-				containerName = strings.Join(containerNameSplitted[:len(containerNameSplitted)-1], "-")
+			if strings.Contains(containerName, "-") {
+				containerNameSplitted := strings.Split(containerName, "-")
+				containerPort, err = strconv.Atoi(containerNameSplitted[len(containerNameSplitted)-1])
+				if err == nil {
+					containerName = strings.Join(containerNameSplitted[:len(containerNameSplitted)-1], "-")
+				} else {
+					containerPort = utils.FindContainerDefaultPort(containerName)
+				}
 			} else {
+				containerName = utils.FindContainerNameByAlias(containerName)
 				containerPort = utils.FindContainerDefaultPort(containerName)
 			}
 		}
