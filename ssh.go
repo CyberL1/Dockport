@@ -95,18 +95,20 @@ func startSSHProxy(proxyDomain string) {
 
 				targetConn, err := net.Dial("tcp", dest)
 				if err != nil {
-					fmt.Printf("Failed to connect to destination %s:\n %v", dest, err)
+					fmt.Printf("Failed to connect to destination %s: %v\n", dest, err)
 
-					// Boot container if it is offline
-					if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" {
+					TIMEOUT_INTERVAL_SECONDS := 1
+					TIMEOUT_MAX_RETRIES := 5
+
+					if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" && strings.HasSuffix(err.Error(), "no such host") {
 						utils.BootOfflineContainer(channelData.DestAddr)
 
-						for {
+						for range TIMEOUT_MAX_RETRIES {
 							targetConn, err = net.Dial("tcp", dest)
 							if err == nil {
 								break
 							}
-							time.Sleep(100 * time.Millisecond)
+							time.Sleep(time.Duration(TIMEOUT_INTERVAL_SECONDS) * time.Second)
 						}
 					} else {
 						newChannel.Reject(ssh.ConnectionFailed, err.Error())
