@@ -110,7 +110,9 @@ func startSSHProxy(proxyDomain string) {
 							}
 							time.Sleep(time.Duration(TIMEOUT_INTERVAL_SECONDS) * time.Second)
 						}
-					} else {
+					}
+
+					if targetConn == nil || err != nil {
 						newChannel.Reject(ssh.ConnectionFailed, err.Error())
 						return
 					}
