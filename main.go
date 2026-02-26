@@ -22,6 +22,14 @@ func main() {
 		os.Mkdir("data", 0755)
 	}
 
+	if _, err := os.Stat("data/tls"); err != nil {
+		os.Mkdir("data/tls", 0755)
+	}
+
+	if _, err := os.Stat("data/domains"); err != nil {
+		os.Mkdir("data/domains", 0755)
+	}
+
 	go startHTTPProxy(proxyDomain)
 	go startSSHProxy(proxyDomain)
 
