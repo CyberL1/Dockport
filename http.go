@@ -59,16 +59,18 @@ func startHTTPProxy(proxyDomain string) {
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 			fmt.Println("http proxy error:", err)
 
-			if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" && strings.HasSuffix(err.Error(), "no such host") {
-				utils.BootOfflineContainer(containerName)
+			if strings.HasSuffix(err.Error(), "no such host") {
+				if os.Getenv("BOOT_OFFLINE_CONTAINERS") == "true" {
+					utils.BootOfflineContainer(containerName)
 
-				for range TIMEOUT_MAX_RETRIES {
-					_, err := http.Get(containerAddress)
-					if err == nil {
-						proxy.ServeHTTP(w, r)
-						return
+					for range TIMEOUT_MAX_RETRIES {
+						_, err := http.Get(containerAddress)
+						if err == nil {
+							proxy.ServeHTTP(w, r)
+							return
+						}
+						time.Sleep(time.Duration(TIMEOUT_INTERVAL_SECONDS) * time.Second)
 					}
-					time.Sleep(time.Duration(TIMEOUT_INTERVAL_SECONDS) * time.Second)
 				}
 				fmt.Fprintln(w, "Could not reach the container")
 			}
