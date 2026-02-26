@@ -17,6 +17,11 @@ func main() {
 		fmt.Println("Docker socket not mounted, some features relying on the socket won't be avaliable")
 	}
 
+	// Check for necessery directories
+	if _, err := os.Stat("data"); err != nil {
+		os.Mkdir("data", 0755)
+	}
+
 	go startHTTPProxy(proxyDomain)
 	go startSSHProxy(proxyDomain)
 
