@@ -91,13 +91,12 @@ func startHTTPProxy(proxyDomain string) {
 					utils.BootOfflineContainer(containerName)
 
 					for range TIMEOUT_MAX_RETRIES {
-						req, err := http.Get(containerAddress)
+						_, err := http.Get(containerAddress)
 
 						if err == nil {
 							proxy.ServeHTTP(w, r)
 							return
 						}
-						defer req.Body.Close()
 						time.Sleep(time.Duration(TIMEOUT_INTERVAL_SECONDS) * time.Second)
 					}
 				}
