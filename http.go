@@ -92,7 +92,6 @@ func startHTTPProxy(proxyDomain string) {
 
 					for range TIMEOUT_MAX_RETRIES {
 						_, err := http.Get(containerAddress)
-
 						if err == nil {
 							proxy.ServeHTTP(w, r)
 							return
