@@ -44,7 +44,7 @@ func startHTTPProxy(proxyDomain string) {
 		} else {
 			containerName = subdomains[len(subdomains)-1]
 
-			if containerName == "a" {
+			if containerName == "dockport" {
 				if r.URL.Path == "/Dockport.cer" {
 					file, err := os.ReadFile("data/tls/tls.cer")
 					if errors.Is(err, os.ErrNotExist) {
