@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-func GenerateCACertificate() ([]byte, []byte, error) {
+func GenerateCACertificate() error {
 	caKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	template := &x509.Certificate{
@@ -30,20 +30,20 @@ func GenerateCACertificate() ([]byte, []byte, error) {
 
 	certDer, err := x509.CreateCertificate(rand.Reader, template, template, &caKey.PublicKey, caKey)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 	certPem := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDer})
 
 	caCert, err := x509.ParseCertificate(certDer)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	os.WriteFile("data/tls/tls.cer", certPem, 0644)
 
 	priv, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	template = &x509.Certificate{
@@ -57,7 +57,7 @@ func GenerateCACertificate() ([]byte, []byte, error) {
 	certPem = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDer})
 	keyBytes, err := x509.MarshalECPrivateKey(caKey)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 
 	keyPem := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes})
@@ -65,5 +65,5 @@ func GenerateCACertificate() ([]byte, []byte, error) {
 	os.WriteFile("data/tls/tls.crt", certPem, 0644)
 	os.WriteFile("data/tls/tls.key", keyPem, 0600)
 
-	return certPem, keyPem, nil
+	return nil
 }
