@@ -44,7 +44,10 @@ func startHTTPProxy(proxyDomain string) {
 			containerName = subdomains[len(subdomains)-1]
 
 			if containerName == "dockport" {
-				if r.URL.Path == "/Dockport.cer" {
+				switch r.URL.Path {
+				case "/":
+					fmt.Fprintln(w, "Dockport admin api\n\n/Dockport.cer - Get CA file\n/regenerate - Prune domain certificates + regenerate CA file")
+				case "/Dockport.cer":
 					file, err := os.ReadFile("data/tls/tls.cer")
 					if errors.Is(err, os.ErrNotExist) {
 						fmt.Fprintln(w, "file not found")
@@ -52,6 +55,16 @@ func startHTTPProxy(proxyDomain string) {
 					}
 
 					fmt.Fprint(w, string(file))
+				case "/regenerate":
+					os.RemoveAll("data/domains")
+
+					err := utils.GenerateCACertificate()
+					if err != nil {
+						fmt.Fprintln(w, err)
+						return
+					}
+
+					fmt.Fprintln(w, "Certificate regenerated. Restart server to reload configuration.")
 				}
 				return
 			}
